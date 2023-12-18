@@ -1,0 +1,86 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                            EasyTradePad for MT5 |
+//|                                            forexroboteasy.com    |
+//|                                            Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+//--- Include necessary libraries and libraries
+#include <Trade\Trade.mqh>
+#include <Controls\ControlButton.mqh>
+#include <Controls\ControlInput.mqh>
+
+//--- Define global variables
+CTrade trade;
+CControlButton openOrderButton;
+CControlButton closeOrderButton;
+CControlInput riskLevelInput;
+
+//+------------------------------------------------------------------+
+//| Custom initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    //--- Create a trading panel
+    CPanel panel(0, 'EasyTradePad', 0, 0, 400, 200);
+
+    //--- Create buttons for opening and closing orders
+    openOrderButton.Create(panel, 'Open Order', 10, 10, 100, 30);
+    closeOrderButton.Create(panel, 'Close Order', 10, 50, 100, 30);
+
+    //--- Create input field for risk level
+    riskLevelInput.Create(panel, 'Risk Level', 10, 90, 100, 30);
+
+    //--- Set initial values
+    riskLevelInput.SetText('1');
+
+    //--- Add event handlers
+    openOrderButton.Click += OnOpenOrderClick;
+    closeOrderButton.Click += OnCloseOrderClick;
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Event handler for opening an order                               |
+//+------------------------------------------------------------------+
+void OnOpenOrderClick(const int x, const int y, const ushort button, const ushort shift, const ushort flags)
+{
+    //--- Retrieve risk level from the input field
+    double riskLevel = StrToDouble(riskLevelInput.GetText());
+
+    //--- Calculate stop loss and take profit levels based on risk level
+    double stopLoss = MarketInfo(_Symbol, MODE_STOPLEVEL) * riskLevel;
+    double takeProfit = MarketInfo(_Symbol, MODE_STOPLEVEL) * (riskLevel * 2);
+
+    //--- Place a market order with calculated stop loss and take profit levels
+    trade.Buy(0.1, _Symbol, 0, 0, stopLoss, takeProfit);
+}
+
+//+------------------------------------------------------------------+
+//| Event handler for closing an order                               |
+//+------------------------------------------------------------------+
+void OnCloseOrderClick(const int x, const int y, const ushort button, const ushort shift, const ushort flags)
+{
+    //--- Close all open positions
+    trade.PositionCloseAll();
+}
+
+//+------------------------------------------------------------------+
+//| Custom deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    //--- Cleanup resources
+    openOrderButton.Destroy();
+    closeOrderButton.Destroy();
+    riskLevelInput.Destroy();
+}
+
+//+------------------------------------------------------------------+
+//| Custom start function                                            |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    //--- Empty start function
+}
